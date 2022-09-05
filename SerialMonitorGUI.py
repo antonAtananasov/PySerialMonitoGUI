@@ -9,16 +9,18 @@ from time import sleep
 window = Tk()
 window.title("Tonziss Serial Monitor")
 # window.geometry('700x500')
+#widgets
 panel = Frame(window)
-panel.pack(side='top',expand=True,padx=10,pady=10,anchor='n',fill='x')
 topFrame1 = Frame(panel)
-topFrame1.pack(fill='x', expand=True, anchor = 'n')
 topFrame2 = Frame(panel)
-topFrame2.pack(fill='x', expand=True,anchor='n',side='top')
 middleFrame=Frame(panel)
-middleFrame.pack(fill='both', expand = True)
 bottomFrame=Frame(panel)
-bottomFrame.pack(fill='both', expand = True)
+#layout
+panel.pack(side='top',expand=True,padx=10,pady=10,anchor='n',fill='x')
+topFrame1.pack(fill='x', expand=True, anchor = 'n')
+topFrame2.pack(fill='x', expand=True,anchor='n',side='top')
+middleFrame.pack(fill='both', expand = True)
+bottomFrame.pack(fill='both', expand = True, side='bottom')
 
 closeSer=False
 ser = False
@@ -56,6 +58,7 @@ reloadComports()
     
 refreshBtn=Button(topFrame1, text='↻',command=reloadComports)
 
+#layout
 refreshBtn.pack(side='left')
 popupMenu.pack(side='left',fill='x',expand=True)
 #end of listing ports =========================^
@@ -68,38 +71,47 @@ def connect():
     window.title(window.title()+' '+choices[i]+' '+baudrate.get())
     topFrame1.destroy()    
     
+#widget
 connectbtn = Button(topFrame1, text='Begin', command=connect)
-connectbtn.pack(side='right')
-
 baudrate = Entry(topFrame1,width=10)
 baudrate.insert(0,'9600')
+#layout
+connectbtn.pack(side='right')
 baudrate.pack(side='right')
 #end of connecting to serial ==================================================^
 
 
 #serial input ======================================v
+#widgets
 serialInput = Entry(topFrame2)
-serialInput.pack(side='left', expand=True, fill='x')
 
-def clicked(e=''):
+def serialSend(e=''):
     ser.write(serialInput.get().encode())
     serialInput.delete(0, END)
-
+#widgets
+serialInput.bind('<Return>', serialSend)
+sendBtn = Button(topFrame2, text="Send", command=serialSend)
 autoscrollVal = IntVar(value=1)
 autoscroll = Checkbutton(topFrame2, variable=autoscrollVal)
+#layout
+serialInput.pack(side='left', expand=True, fill='x')
 autoscroll.pack(side='right')
-
-sendBtn = Button(topFrame2, text="Send", command=clicked)
 sendBtn.pack(side='right')
-serialInput.bind('<Return>', clicked)
 #end of serial input ==============================^
-
 
 #serial monitor ========================================================v
 serialOutput = ScrolledText(panel)
 serialOutput.pack(fill='both',expand=True)
+# end of serial monitor ================================================^
 
-window.update()
+#file controls ==========================v
+def clearMonitor():
+    serialOutput.delete('1.0','end')
+clearBtn = Button(bottomFrame, text='Clear',command=clearMonitor)
+clearBtn.pack(side='right')
+#end of file controls ===================^
+
+#serial loop ===================================================================================v
 while True:
     sleep(.001)
     if closeSer:
@@ -108,13 +120,13 @@ while True:
         window.destroy()
         break
     while ser != False and ser.in_waiting:
-        output=ser.readline()
+        output=ser.read()
         serialOutput.insert('end',output)
         if autoscrollVal.get():
             serialOutput.see('end')
 
     window.update()
-# end of serial monitor ================================================^
+#end of serial loop ===========================================================================^
 
 window.mainloop()
 
