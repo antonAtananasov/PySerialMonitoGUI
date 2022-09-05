@@ -1,9 +1,14 @@
 from tkinter import *
+from tkinter import filedialog
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import serial
 import serial.tools.list_ports
 from time import sleep
+import os
+from os.path import exists
+from TkToolTip import *
+
 
 # Window setup ==============================================================================v
 window = Tk()
@@ -17,10 +22,10 @@ middleFrame=Frame(panel)
 bottomFrame=Frame(panel)
 #layout
 panel.pack(side='top',expand=True,padx=10,pady=10,anchor='n',fill='x')
-topFrame1.pack(fill='x', expand=True, anchor = 'n')
-topFrame2.pack(fill='x', expand=True,anchor='n',side='top')
-middleFrame.pack(fill='both', expand = True)
-bottomFrame.pack(fill='both', expand = True, side='bottom')
+topFrame1.pack(fill='x', expand=True, anchor = 'n', pady=2)
+topFrame2.pack(fill='x', expand=True,anchor='n',side='top', pady=2)
+middleFrame.pack(fill='both', expand = True, pady=2)
+bottomFrame.pack(fill='both', expand = True, side='bottom', pady=2)
 
 closeSer=False
 ser = False
@@ -107,7 +112,36 @@ serialOutput.pack(fill='both',expand=True)
 #file controls ==========================v
 def clearMonitor():
     serialOutput.delete('1.0','end')
-clearBtn = Button(bottomFrame, text='Clear',command=clearMonitor)
+    
+fileDirectory=os.getcwd()
+fileName = 'log.txt'
+logName = Label(bottomFrame, text='log.txt')
+filePathTooltip = CreateToolTip(logName, os.path.join(fileDirectory, fileName))
+def getFilePath():
+    global fileDirectory
+    global fileName
+    #request a file and get its full path
+    logToFileValue.set(0)
+    f = filedialog.asksaveasfile(initialdir = fileDirectory,title = "Select file", filetypes = (("text files","*.txt"),("all files","*.*")),defaultextension=".txt", initialfile='log.txt')
+    if not f:
+        return
+    path = f.name
+    fileName = os.path.basename(path)
+    fileDirectory = os.path.dirname(path)
+    logName.configure(text=fileName)
+    filePathTooltip.text=os.path.join(fileDirectory, fileName)
+    
+clearBtn = Button(bottomFrame, text='Clear',command = clearMonitor)
+directoryBtn = Button(bottomFrame, text='🗀', command = getFilePath)
+
+
+logToFileValue = IntVar()
+logToFile = Checkbutton(bottomFrame, variable = logToFileValue)
+
+#layout
+directoryBtn.pack(side='left')
+logName.pack(side='left', padx=4)
+logToFile.pack(side='left')
 clearBtn.pack(side='right')
 #end of file controls ===================^
 
@@ -120,7 +154,12 @@ while True:
         window.destroy()
         break
     while ser != False and ser.in_waiting:
-        output=ser.read()
+        output=ser.read().decode()
+        if logToFileValue.get():
+            path=os.path.join(fileDirectory, fileName)
+            f = open(path,'a+' if exists(path) else 'a')
+            f.write(output)
+            f.close()
         serialOutput.insert('end',output)
         if autoscrollVal.get():
             serialOutput.see('end')
