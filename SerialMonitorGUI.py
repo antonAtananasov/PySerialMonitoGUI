@@ -5,10 +5,19 @@ from tkinter.scrolledtext import ScrolledText
 import serial
 import serial.tools.list_ports
 from time import sleep
+from datetime import datetime
 import os
 from os.path import exists
 from TkToolTip import *
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk
+)
+from random import randint
 # Window setup ==============================================================================v
 window = tk.Tk()
 window.title("Tonziss Serial Monitor")
@@ -16,7 +25,6 @@ window.option_add( "*font", "Courier 10" )
 
 style = ttk.Style(window)
 style.theme_use('vista')
-# style.theme_use("clam")
 
 
 #widgets
@@ -38,6 +46,33 @@ def on_closing():
     global closeSer
     closeSer = True
 window.protocol("WM_DELETE_WINDOW", on_closing)
+
+#plotter
+mpl.use('TkAgg')
+mpl.rcParams['toolbar'] = 'None'
+figure = Figure(figsize=(6, 4), dpi=100)
+figure_canvas = FigureCanvasTkAgg(figure, window)
+# NavigationToolbar2Tk(figure_canvas, window)
+
+# create axes
+ax = figure.add_subplot()
+
+# create the barchart
+figure_canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
+
+x,y=[],[]
+xrange=30
+xrange=5
+def animate(i):
+    if len(x) < 1:
+        return
+    ax.clear()
+    ax.plot(x, y)
+    # ax.set_xlim([x[-1]-xrange,x[-1]])
+    # ax.set_ylim([0,10])
+    ax.relim()
+# ani = FuncAnimation(figure, animate, interval=20)
+
 #end of window setup =======================================================================^
 
 #list ports ===================================v
@@ -61,7 +96,7 @@ def reloadComports():
         ports.append(port)
         descs.append(desc)
         hwids.append(hwid)
-        popupMenu['menu'].add_command(label=choice, command=_setit(portChoice, choice))
+        popupMenu['menu'].add_command(label=choice, command=tk._setit(portChoice, choice))
     portChoice.set(str(choices[0]) if len(choices) > 0 else 'No detected ports')
     popupMenu.update()
 reloadComports()
@@ -114,11 +149,6 @@ autoscroll.pack(side='right')
 sendBtn.pack(side='right')
 #end of serial input ==============================^
 
-#serial monitor ========================================================v
-serialOutput = ScrolledText(panel, state='disabled')
-serialOutput.pack(fill='both',expand=True)
-# end of serial monitor ================================================^
-
 #file controls ==========================v
 fileDirectory=os.getcwd()
 fileName = 'log.txt'
@@ -151,13 +181,23 @@ logToFile.pack(side='left')
 #end of file controls ===================^
 
 #output control ===================================================v
+serialOutput = ScrolledText(panel)
+serialOutput.pack(fill='both',expand=True)
+
 def clearMonitor():
     serialOutput.delete('1.0','end')
+    
+    
+clearMonitor()
+serialOutput.configure(state='disabled')
+
 def zoom(amount):
     fontTuple = serialOutput.cget('font').split(' ')
     font = fontTuple[0]
     size = int(fontTuple[1])+amount
     serialOutput.configure(font = (font,size))
+
+
 
 clearBtn = ttk.Button(bottomFrame, text='Clear', command = clearMonitor)
 zoomInBtn = ttk.Button(bottomFrame, text='+', command = lambda:zoom(2))
@@ -170,6 +210,7 @@ zoomOutBtn.pack(side='right')
 
 
 #serial loop ===================================================================================v
+serialBuffer=''
 while True:
     sleep(.001)
     if closeSer:
@@ -186,7 +227,17 @@ while True:
             f.close()
         serialOutput.configure(state='normal')
         serialOutput.insert('end',output)
+
         serialOutput.configure(state='disabled')
+        if output != '\n':
+            serialBuffer += output
+        else:
+            serialBuffer = serialBuffer.strip().encode()
+            if serialBuffer.isdigit():
+                x.append(datetime.timestamp(datetime.now()))
+                y.append(float(serialBuffer))
+                print(serialBuffer)
+            serialBuffer = ''
         if autoscrollVal.get():
             serialOutput.see('end')
 
