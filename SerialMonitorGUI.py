@@ -13,6 +13,8 @@ from TkToolTip import *
 # Window setup ==============================================================================v
 window = Tk()
 window.title("Tonziss Serial Monitor")
+window.option_add( "*font", "Courier 10" )
+
 # window.geometry('700x500')
 #widgets
 panel = Frame(window)
@@ -61,7 +63,7 @@ def reloadComports():
     popupMenu.update()
 reloadComports()
     
-refreshBtn=Button(topFrame1, text='↻',command=reloadComports)
+refreshBtn=Button(topFrame1, text='⟳',command=reloadComports)
 
 #layout
 refreshBtn.pack(side='left')
@@ -78,7 +80,7 @@ def connect():
     
 #widget
 connectbtn = Button(topFrame1, text='Begin', command=connect)
-baudrate = Entry(topFrame1,width=10)
+baudrate = Entry(topFrame1, width=9)
 baudrate.insert(0,'9600')
 #layout
 connectbtn.pack(side='right')
@@ -110,9 +112,6 @@ serialOutput.pack(fill='both',expand=True)
 # end of serial monitor ================================================^
 
 #file controls ==========================v
-def clearMonitor():
-    serialOutput.delete('1.0','end')
-    
 fileDirectory=os.getcwd()
 fileName = 'log.txt'
 logName = Label(bottomFrame, text='log.txt')
@@ -131,7 +130,6 @@ def getFilePath():
     logName.configure(text=fileName)
     filePathTooltip.text=os.path.join(fileDirectory, fileName)
     
-clearBtn = Button(bottomFrame, text='Clear',command = clearMonitor)
 directoryBtn = Button(bottomFrame, text='🗀', command = getFilePath)
 
 
@@ -142,8 +140,26 @@ logToFile = Checkbutton(bottomFrame, variable = logToFileValue)
 directoryBtn.pack(side='left')
 logName.pack(side='left', padx=4)
 logToFile.pack(side='left')
-clearBtn.pack(side='right')
 #end of file controls ===================^
+
+#output control ===================================================v
+def clearMonitor():
+    serialOutput.delete('1.0','end')
+def zoom(amount):
+    fontTuple = serialOutput.cget('font').split(' ')
+    font = fontTuple[0]
+    size = int(fontTuple[1])+amount
+    serialOutput.configure(font = (font,size))
+
+clearBtn = Button(bottomFrame, text='Clear', command = clearMonitor)
+zoomInBtn = Button(bottomFrame, text='+', command = lambda:zoom(2))
+zoomOutBtn = Button(bottomFrame, text='-', command = lambda:zoom(-2))
+#layout
+clearBtn.pack(side='right')
+zoomInBtn.pack(side='right')
+zoomOutBtn.pack(side='right')
+#end of output control ============================================^
+
 
 #serial loop ===================================================================================v
 while True:
