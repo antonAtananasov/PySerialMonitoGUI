@@ -61,7 +61,7 @@ def reloadComports():
         ports.append(port)
         descs.append(desc)
         hwids.append(hwid)
-        popupMenu['menu'].add_command(label=choice, command=tk._setit(portChoice, choice))
+        popupMenu['menu'].add_command(label=choice, command=_setit(portChoice, choice))
     portChoice.set(str(choices[0]) if len(choices) > 0 else 'No detected ports')
     popupMenu.update()
 reloadComports()
