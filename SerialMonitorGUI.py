@@ -1,6 +1,6 @@
-from tkinter import *
-from tkinter import filedialog
+from tkinter import ttk
 import tkinter as tk
+from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 import serial
 import serial.tools.list_ports
@@ -9,19 +9,22 @@ import os
 from os.path import exists
 from TkToolTip import *
 
-
 # Window setup ==============================================================================v
-window = Tk()
+window = tk.Tk()
 window.title("Tonziss Serial Monitor")
 window.option_add( "*font", "Courier 10" )
 
-# window.geometry('700x500')
+style = ttk.Style(window)
+style.theme_use('vista')
+# style.theme_use("clam")
+
+
 #widgets
-panel = Frame(window)
-topFrame1 = Frame(panel)
-topFrame2 = Frame(panel)
-middleFrame=Frame(panel)
-bottomFrame=Frame(panel)
+panel = ttk.Frame(window)
+topFrame1 = ttk.Frame(panel)
+topFrame2 = ttk.Frame(panel)
+middleFrame=ttk.Frame(panel)
+bottomFrame=ttk.Frame(panel)
 #layout
 panel.pack(side='top',expand=True,padx=10,pady=10,anchor='n',fill='x')
 topFrame1.pack(fill='x', expand=True, anchor = 'n', pady=2)
@@ -42,7 +45,7 @@ ports, descs, hwids = [],[],[]
 choices = ['']
 
 portChoice = StringVar(topFrame1)
-popupMenu=OptionMenu(topFrame1, portChoice, *choices)
+popupMenu=ttk.OptionMenu(topFrame1, portChoice, *choices)
 
 def reloadComports():
     portObjs=sorted(serial.tools.list_ports.comports())
@@ -58,12 +61,12 @@ def reloadComports():
         ports.append(port)
         descs.append(desc)
         hwids.append(hwid)
-        popupMenu['menu'].add_command(label=choice, command=tk._setit(portChoice, choice))
+        popupMenu['menu'].add_command(label=choice, command=_setit(portChoice, choice))
     portChoice.set(str(choices[0]) if len(choices) > 0 else 'No detected ports')
     popupMenu.update()
 reloadComports()
     
-refreshBtn=Button(topFrame1, text='⟳',command=reloadComports)
+refreshBtn=ttk.Button(topFrame1, text='⟳',command=reloadComports)
 
 #layout
 refreshBtn.pack(side='left')
@@ -72,6 +75,8 @@ popupMenu.pack(side='left',fill='x',expand=True)
 
 #connecting to serial ========================================================v
 def connect():
+    if len(choices) < 1:
+        return
     global ser
     i = choices.index(portChoice.get())
     ser=serial.Serial(str(ports[i]), int(baudrate.get()))
@@ -79,12 +84,12 @@ def connect():
     topFrame1.destroy()    
     
 #widget
-connectbtn = Button(topFrame1, text='Begin', command=connect)
+connectbtn = ttk.Button(topFrame1, text='Begin', command=connect)
 baudrate = Entry(topFrame1, width=9)
 baudrate.insert(0,'9600')
 #layout
 connectbtn.pack(side='right')
-baudrate.pack(side='right')
+baudrate.pack(side='right', fill='y')
 #end of connecting to serial ==================================================^
 
 
@@ -97,11 +102,11 @@ def serialSend(e=''):
     serialInput.delete(0, END)
 #widgets
 serialInput.bind('<Return>', serialSend)
-sendBtn = Button(topFrame2, text="Send", command=serialSend)
+sendBtn = ttk.Button(topFrame2, text="Send", command=serialSend)
 autoscrollVal = IntVar(value=1)
-autoscroll = Checkbutton(topFrame2, variable=autoscrollVal)
+autoscroll = ttk.Checkbutton(topFrame2, variable=autoscrollVal)
 #layout
-serialInput.pack(side='left', expand=True, fill='x')
+serialInput.pack(side='left', expand=True, fill='both')
 autoscroll.pack(side='right')
 sendBtn.pack(side='right')
 #end of serial input ==============================^
@@ -114,7 +119,7 @@ serialOutput.pack(fill='both',expand=True)
 #file controls ==========================v
 fileDirectory=os.getcwd()
 fileName = 'log.txt'
-logName = Label(bottomFrame, text='log.txt')
+logName = ttk.Label(bottomFrame, text='log.txt')
 filePathTooltip = CreateToolTip(logName, os.path.join(fileDirectory, fileName))
 def getFilePath():
     global fileDirectory
@@ -130,11 +135,11 @@ def getFilePath():
     logName.configure(text=fileName)
     filePathTooltip.text=os.path.join(fileDirectory, fileName)
     
-directoryBtn = Button(bottomFrame, text='🗀', command = getFilePath)
+directoryBtn = ttk.Button(bottomFrame, text='🗀', command = getFilePath)
 
 
 logToFileValue = IntVar()
-logToFile = Checkbutton(bottomFrame, variable = logToFileValue)
+logToFile = ttk.Checkbutton(bottomFrame, variable = logToFileValue)
 
 #layout
 directoryBtn.pack(side='left')
@@ -151,9 +156,9 @@ def zoom(amount):
     size = int(fontTuple[1])+amount
     serialOutput.configure(font = (font,size))
 
-clearBtn = Button(bottomFrame, text='Clear', command = clearMonitor)
-zoomInBtn = Button(bottomFrame, text='+', command = lambda:zoom(2))
-zoomOutBtn = Button(bottomFrame, text='-', command = lambda:zoom(-2))
+clearBtn = ttk.Button(bottomFrame, text='Clear', command = clearMonitor)
+zoomInBtn = ttk.Button(bottomFrame, text='+', command = lambda:zoom(2))
+zoomOutBtn = ttk.Button(bottomFrame, text='-', command = lambda:zoom(-2))
 #layout
 clearBtn.pack(side='right')
 zoomInBtn.pack(side='right')
